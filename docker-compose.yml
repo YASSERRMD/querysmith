@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: querysmith
+      POSTGRES_PASSWORD: querysmith
+      POSTGRES_DB: querysmith
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: postgres://querysmith:querysmith@postgres:5432/querysmith
+      RUST_LOG: info
+    depends_on:
+      - postgres
+
+  slack-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DATABASE_URL: postgres://querysmith:querysmith@postgres:5432/querysmith
+      SLACK_BOT_TOKEN: ${SLACK_BOT_TOKEN}
+      RUST_LOG: info
+    depends_on:
+      - postgres
+
+volumes:
+  postgres_data:
