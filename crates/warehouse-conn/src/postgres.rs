@@ -1,16 +1,39 @@
 use async_trait::async_trait;
 use sqlx::{
-    postgres::{PgPool, PgRow},
+    postgres::{PgPool, PgPoolOptions, PgRow},
     Column, Row, TypeInfo,
 };
 use std::sync::Arc;
+use std::time::Duration;
 use tokio::sync::RwLock;
 
 use crate::traits::{Column as TableColumn, Error, QueryResult, TableSchema, Warehouse};
 
+#[derive(Clone)]
+pub struct PostgresWarehouseOptions {
+    pub max_connections: u32,
+    pub min_connections: u32,
+    pub acquire_timeout: Duration,
+    pub idle_timeout: Duration,
+    pub max_lifetime: Duration,
+}
+
+impl Default for PostgresWarehouseOptions {
+    fn default() -> Self {
+        Self {
+            max_connections: 10,
+            min_connections: 5,
+            acquire_timeout: Duration::from_secs(30),
+            idle_timeout: Duration::from_secs(600),
+            max_lifetime: Duration::from_secs(1800),
+        }
+    }
+}
+
 pub struct PostgresWarehouse {
     pool: Arc<RwLock<Option<PgPool>>>,
     connection_string: String,
+    options: PostgresWarehouseOptions,
 }
 
 impl PostgresWarehouse {
@@ -18,7 +41,18 @@ impl PostgresWarehouse {
         Self {
             pool: Arc::new(RwLock::new(None)),
             connection_string: connection_string.to_string(),
+            options: PostgresWarehouseOptions::default(),
         }
+    }
+
+    pub fn with_options(mut self, options: PostgresWarehouseOptions) -> Self {
+        self.options = options;
+        self
+    }
+
+    pub fn with_max_connections(mut self, max: u32) -> Self {
+        self.options.max_connections = max;
+        self
     }
 
     async fn get_pool(&self) -> Result<PgPool, Error> {
@@ -32,9 +66,18 @@ impl PostgresWarehouse {
 #[async_trait]
 impl Warehouse for PostgresWarehouse {
     async fn connect(&self) -> Result<(), Error> {
-        let pool = PgPool::connect(&self.connection_string)
+        let pool_options = PgPoolOptions::new()
+            .max_connections(self.options.max_connections)
+            .min_connections(self.options.min_connections)
+            .acquire_timeout(self.options.acquire_timeout)
+            .idle_timeout(self.options.idle_timeout)
+            .max_lifetime(self.options.max_lifetime);
+        
+        let pool = pool_options
+            .connect(&self.connection_string)
             .await
             .map_err(|e| Error::Connection(e.to_string()))?;
+        
         let mut guard = self.pool.write().await;
         *guard = Some(pool);
         Ok(())
