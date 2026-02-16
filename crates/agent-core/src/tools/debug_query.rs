@@ -94,7 +94,10 @@ impl Tool for DebugQueryTool {
         }
     }
 
-    fn execute(&self, params: HashMap<String, serde_json::Value>) -> Pin<Box<dyn Future<Output = Result<ToolResult, String>> + Send>> {
+    fn execute(
+        &self,
+        params: HashMap<String, serde_json::Value>,
+    ) -> Pin<Box<dyn Future<Output = Result<ToolResult, String>> + Send>> {
         Box::pin(async move {
             let sql = params
                 .get("sql")
@@ -123,10 +126,10 @@ mod tests {
     #[test]
     fn test_debug_query_tool() {
         let tool = DebugQueryTool::new();
-        
+
         let sql = "SELECT * FORM users";
         let error = "syntax error at or near 'FORM'";
-        
+
         let analysis = tool.analyze_error(sql, error);
         assert!(analysis.contains("syntax"));
     }

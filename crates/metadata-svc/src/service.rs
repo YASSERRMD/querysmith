@@ -42,7 +42,9 @@ impl MetadataService {
 
     pub async fn delete_schema(&self, name: &str) -> Result<(), Error> {
         let mut schemas = self.schemas.write().await;
-        schemas.remove(name).ok_or_else(|| Error::NotFound(format!("Schema '{}' not found", name)))?;
+        schemas
+            .remove(name)
+            .ok_or_else(|| Error::NotFound(format!("Schema '{}' not found", name)))?;
         Ok(())
     }
 
@@ -55,7 +57,11 @@ impl MetadataService {
         Ok(())
     }
 
-    pub async fn get_table(&self, schema_name: &str, table_name: &str) -> Result<TableMetadata, Error> {
+    pub async fn get_table(
+        &self,
+        schema_name: &str,
+        table_name: &str,
+    ) -> Result<TableMetadata, Error> {
         let schemas = self.schemas.read().await;
         let schema = schemas
             .get(schema_name)
@@ -87,7 +93,11 @@ impl MetadataService {
         Ok(())
     }
 
-    pub async fn get_annotations(&self, schema_name: &str, table_name: &str) -> Result<Vec<Annotation>, Error> {
+    pub async fn get_annotations(
+        &self,
+        schema_name: &str,
+        table_name: &str,
+    ) -> Result<Vec<Annotation>, Error> {
         let table = self.get_table(schema_name, table_name).await?;
         Ok(table.annotations)
     }
@@ -137,10 +147,10 @@ mod tests {
             created_at: None,
             updated_at: None,
         };
-        
+
         let saved = service.save_schema(schema.clone()).await.unwrap();
         assert_eq!(saved.name, "test");
-        
+
         let retrieved = service.get_schema("test").await.unwrap();
         assert_eq!(retrieved.name, "test");
     }
@@ -163,17 +173,20 @@ mod tests {
             created_at: None,
             updated_at: None,
         };
-        
+
         service.save_schema(schema).await.unwrap();
-        
+
         let annotation = Annotation {
             key: "description".to_string(),
             value: "User data".to_string(),
             source: Some("manual".to_string()),
         };
-        
-        service.add_annotation("test", "users", annotation).await.unwrap();
-        
+
+        service
+            .add_annotation("test", "users", annotation)
+            .await
+            .unwrap();
+
         let annotations = service.get_annotations("test", "users").await.unwrap();
         assert_eq!(annotations.len(), 1);
         assert_eq!(annotations[0].key, "description");

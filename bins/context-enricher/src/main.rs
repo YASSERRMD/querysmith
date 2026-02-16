@@ -1,10 +1,10 @@
 use anyhow::Result;
-use metadata_svc::{MetadataService, Schema, TableMetadata, Annotation};
 use metadata_svc::models::ColumnMetadata;
+use metadata_svc::{Annotation, MetadataService, Schema, TableMetadata};
 use rag_engine::VectorIndex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use tracing::{info, error};
+use tracing::{error, info};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TableContext {
@@ -46,15 +46,15 @@ impl ContextEnricher {
         warehouse: &dyn warehouse_conn::Warehouse,
     ) -> Result<Schema> {
         info!("Loading schema from warehouse");
-        
+
         let table_names = warehouse.list_tables().await?;
         info!("Found {} tables", table_names.len());
 
         let mut tables = Vec::new();
-        
+
         for table_name in table_names {
             let schema = warehouse.get_schema(&table_name).await?;
-            
+
             let columns: Vec<ColumnMetadata> = schema
                 .columns
                 .iter()
@@ -75,7 +75,12 @@ impl ContextEnricher {
                         .columns
                         .iter()
                         .enumerate()
-                        .map(|(i, col)| (col.clone(), row.get(i).cloned().unwrap_or(serde_json::Value::Null)))
+                        .map(|(i, col)| {
+                            (
+                                col.clone(),
+                                row.get(i).cloned().unwrap_or(serde_json::Value::Null),
+                            )
+                        })
                         .collect()
                 })
                 .collect();
@@ -119,9 +124,13 @@ impl ContextEnricher {
     ) -> Result<TableContext> {
         let schema = schema_name.unwrap_or("main");
         let table = self.metadata.get_table(schema, table_name).await?;
-        
-        let lineage_deps = self.metadata.get_table_dependencies(table_name).await.unwrap_or_default();
-        
+
+        let lineage_deps = self
+            .metadata
+            .get_table_dependencies(table_name)
+            .await
+            .unwrap_or_default();
+
         let description = self.generate_table_description(&table);
 
         let columns: Vec<ColumnInfo> = table
@@ -150,7 +159,7 @@ impl ContextEnricher {
 
     fn generate_table_description(&self, table: &TableMetadata) -> String {
         let mut desc = format!("Table: {}", table.name);
-        
+
         if let Some(ref desc_text) = table.description {
             desc.push_str(&format!("\nDescription: {}", desc_text));
         }
@@ -159,8 +168,15 @@ impl ContextEnricher {
             desc.push_str("\nColumns:");
             for col in &table.columns {
                 let _nullable = if col.nullable { "NULL" } else { "NOT NULL" };
-                let comment = col.comment.as_ref().map(|c| format!(" - {}", c)).unwrap_or_default();
-                desc.push_str(&format!("\n  - {} ({}) {}", col.name, col.data_type, comment));
+                let comment = col
+                    .comment
+                    .as_ref()
+                    .map(|c| format!(" - {}", c))
+                    .unwrap_or_default();
+                desc.push_str(&format!(
+                    "\n  - {} ({}) {}",
+                    col.name, col.data_type, comment
+                ));
             }
         }
 
@@ -183,7 +199,10 @@ impl ContextEnricher {
         let mut contexts = Vec::new();
 
         for table in &schema.tables {
-            match self.generate_table_context(&table.name, table.schema_name.as_deref()).await {
+            match self
+                .generate_table_context(&table.name, table.schema_name.as_deref())
+                .await
+            {
                 Ok(ctx) => contexts.push(ctx),
                 Err(e) => error!("Failed to generate context for {}: {}", table.name, e),
             }
@@ -217,11 +236,11 @@ impl Default for ContextEnricher {
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
-    
+
     info!("Context Enricher starting...");
 
     let _enricher = ContextEnricher::new();
-    
+
     println!("Context enricher initialized");
     println!("Usage:");
     println!("  - Load schema from warehouse and generate contexts");

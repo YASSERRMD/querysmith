@@ -1,7 +1,7 @@
-pub mod search_tables;
-pub mod run_sql;
 pub mod debug_query;
+pub mod run_sql;
+pub mod search_tables;
 
-pub use search_tables::SearchTablesTool;
-pub use run_sql::RunSqlTool;
 pub use debug_query::DebugQueryTool;
+pub use run_sql::RunSqlTool;
+pub use search_tables::SearchTablesTool;

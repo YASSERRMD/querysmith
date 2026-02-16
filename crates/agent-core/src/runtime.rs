@@ -62,20 +62,30 @@ When you need to use a tool, respond with a JSON object containing tool_calls.
         self.tools.to_json_schemas()
     }
 
-    pub async fn execute_tool(&self, tool_name: &str, arguments: serde_json::Value) -> Result<String, String> {
-        let tool = self.tools.get(tool_name).ok_or_else(|| format!("Tool not found: {}", tool_name))?;
-        
-        let params: HashMap<String, serde_json::Value> = serde_json::from_value(arguments)
-            .map_err(|e| format!("Invalid arguments: {}", e))?;
+    pub async fn execute_tool(
+        &self,
+        tool_name: &str,
+        arguments: serde_json::Value,
+    ) -> Result<String, String> {
+        let tool = self
+            .tools
+            .get(tool_name)
+            .ok_or_else(|| format!("Tool not found: {}", tool_name))?;
+
+        let params: HashMap<String, serde_json::Value> =
+            serde_json::from_value(arguments).map_err(|e| format!("Invalid arguments: {}", e))?;
 
         let result = tool.execute(params).await;
-        
+
         match result {
             Ok(tool_result) => {
                 if tool_result.success {
-                    Ok(serde_json::to_string(&tool_result.data).unwrap_or_else(|_| "{}".to_string()))
+                    Ok(serde_json::to_string(&tool_result.data)
+                        .unwrap_or_else(|_| "{}".to_string()))
                 } else {
-                    Err(tool_result.error.unwrap_or_else(|| "Unknown error".to_string()))
+                    Err(tool_result
+                        .error
+                        .unwrap_or_else(|| "Unknown error".to_string()))
                 }
             }
             Err(e) => Err(e),
@@ -99,7 +109,7 @@ mod tests {
     fn test_agent_runtime_creation() {
         let registry = ToolRegistry::new();
         let runtime = AgentRuntime::new("minimax-m2.5".to_string(), registry);
-        
+
         assert_eq!(runtime.model, "minimax-m2.5");
         assert_eq!(runtime.max_retries(), 3);
     }

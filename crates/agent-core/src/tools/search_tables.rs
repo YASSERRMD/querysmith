@@ -46,7 +46,10 @@ impl Tool for SearchTablesTool {
         }
     }
 
-    fn execute(&self, params: HashMap<String, serde_json::Value>) -> Pin<Box<dyn Future<Output = Result<ToolResult, String>> + Send>> {
+    fn execute(
+        &self,
+        params: HashMap<String, serde_json::Value>,
+    ) -> Pin<Box<dyn Future<Output = Result<ToolResult, String>> + Send>> {
         let tables = self.tables.clone();
         Box::pin(async move {
             let query = params
@@ -56,17 +59,15 @@ impl Tool for SearchTablesTool {
                 .to_lowercase();
 
             if query.is_empty() {
-                return Ok(ToolResult::success(
-                    serde_json::json!({
-                        "tables": tables.iter().map(|t| {
-                            serde_json::json!({
-                                "name": t.name,
-                                "schema": t.schema,
-                                "description": t.description
-                            })
-                        }).collect::<Vec<_>>()
-                    })
-                ));
+                return Ok(ToolResult::success(serde_json::json!({
+                    "tables": tables.iter().map(|t| {
+                        serde_json::json!({
+                            "name": t.name,
+                            "schema": t.schema,
+                            "description": t.description
+                        })
+                    }).collect::<Vec<_>>()
+                })));
             }
 
             let matches: Vec<_> = tables
@@ -87,7 +88,9 @@ impl Tool for SearchTablesTool {
                 })
                 .collect();
 
-            Ok(ToolResult::success(serde_json::json!({ "tables": matches })))
+            Ok(ToolResult::success(
+                serde_json::json!({ "tables": matches }),
+            ))
         })
     }
 }

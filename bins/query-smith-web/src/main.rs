@@ -46,7 +46,7 @@ async fn chat_handler(
     Json(payload): Json<ChatRequest>,
 ) -> impl IntoResponse {
     let _user_id = payload.user_id.unwrap_or_else(|| "anonymous".to_string());
-    
+
     Json(ApiResponse {
         success: true,
         data: Some(ChatResponse {
@@ -57,16 +57,13 @@ async fn chat_handler(
     })
 }
 
-async fn ws_handler(
-    ws: WebSocketUpgrade,
-    State(_state): State<AppState>,
-) -> Response {
+async fn ws_handler(ws: WebSocketUpgrade, State(_state): State<AppState>) -> Response {
     ws.on_upgrade(handle_socket)
 }
 
 async fn handle_socket(socket: WebSocket) {
     let (mut sender, mut receiver) = socket.split();
-    
+
     while let Some(msg) = receiver.next().await {
         if let Ok(msg) = msg {
             if let Message::Text(text) = msg {
@@ -96,16 +93,16 @@ fn cors() -> CorsLayer {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
-    
+
     let agent = Arc::new(agent_core::AgentRuntime::new(
         "minimax-m2.5".to_string(),
         agent_core::ToolRegistry::new(),
     ));
-    
+
     let memory = Arc::new(memory_svc::MemoryService::new());
-    
+
     let state = AppState { agent, memory };
-    
+
     let app = Router::new()
         .route("/", get(|| async { "QuerySmith API" }))
         .route("/health", get(health_handler))
@@ -113,11 +110,11 @@ async fn main() {
         .route("/ws", get(ws_handler))
         .layer(ServiceBuilder::new().layer(cors()))
         .with_state(state);
-    
+
     let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
-    
+
     tracing::info!("Starting QuerySmith API on {}", addr);
-    
+
     let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
     axum::serve(listener, app).await.unwrap();
 }

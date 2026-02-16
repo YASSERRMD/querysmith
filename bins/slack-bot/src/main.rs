@@ -1,10 +1,4 @@
-use axum::{
-    extract::Json,
-    http::StatusCode,
-    response::IntoResponse,
-    routing::post,
-    Router,
-};
+use axum::{extract::Json, http::StatusCode, response::IntoResponse, routing::post, Router};
 use memory_svc::{Memory, MemoryScope, MemoryType};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -77,13 +71,16 @@ async fn handle_event_callback(
 
     if let Some(event) = payload.event {
         if event.event_type == "message" {
-            if let (Some(text), Some(user), Some(channel), Some(thread_ts)) = 
-                (event.text, event.user, event.channel, event.thread_ts.or(event.ts)) 
-            {
+            if let (Some(text), Some(user), Some(channel), Some(thread_ts)) = (
+                event.text,
+                event.user,
+                event.channel,
+                event.thread_ts.or(event.ts),
+            ) {
                 info!("Received message from user {} in channel {}", user, channel);
-                
+
                 let conversation_key = format!("{}:{}", channel, thread_ts);
-                
+
                 let _ = state.conversations.write().await.insert(
                     conversation_key.clone(),
                     ConversationState {
@@ -91,9 +88,12 @@ async fn handle_event_callback(
                         thread_ts: Some(thread_ts),
                     },
                 );
-                
+
                 let user_memory_scope = MemoryScope::user(&user);
-                let _ = state.memory.retrieve(&text, Some(user_memory_scope), 5).await;
+                let _ = state
+                    .memory
+                    .retrieve(&text, Some(user_memory_scope), 5)
+                    .await;
             }
         }
     }
@@ -115,35 +115,41 @@ async fn handle_slash_command(
     match command.as_str() {
         "/query" | "/querysmith" => {
             let user_memory_scope = MemoryScope::user(&user_id);
-            let context = state.memory.inject_into_prompt(&text, Some(user_memory_scope)).await.unwrap_or_default();
-            
+            let context = state
+                .memory
+                .inject_into_prompt(&text, Some(user_memory_scope))
+                .await
+                .unwrap_or_default();
+
             let _full_prompt = if context.is_empty() {
                 text.clone()
             } else {
                 format!("{}\n\nRelevant context:\n{}", text, context)
             };
-            
-            let response_text = format!("Processing query: {}\n\n{}", text, "This is a placeholder response. Connect to LLM to get actual results.");
-            
-            let _ = state.memory.save(
-                Memory::new(
+
+            let response_text = format!(
+                "Processing query: {}\n\n{}",
+                text, "This is a placeholder response. Connect to LLM to get actual results."
+            );
+
+            let _ = state
+                .memory
+                .save(Memory::new(
                     MemoryScope::user(&user_id),
                     format!("Q: {}\nA: {}", text, response_text),
                     MemoryType::Conversation,
-                )
-            ).await;
+                ))
+                .await;
 
             Json(SlackResponse {
                 response_type: "in_channel".to_string(),
                 text: response_text,
             })
         }
-        _ => {
-            Json(SlackResponse {
-                response_type: "ephemeral".to_string(),
-                text: "Unknown command. Try /query <your question>".to_string(),
-            })
-        }
+        _ => Json(SlackResponse {
+            response_type: "ephemeral".to_string(),
+            text: "Unknown command. Try /query <your question>".to_string(),
+        }),
     }
 }
 

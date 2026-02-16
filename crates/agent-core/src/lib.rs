@@ -10,5 +10,5 @@ pub use error::Error;
 pub use orchestrator::AgentOrchestrator;
 pub use registry::ToolRegistry;
 pub use runtime::AgentRuntime;
-pub use traits::{Tool, ToolResult};
 pub use tools::{DebugQueryTool, RunSqlTool, SearchTablesTool};
+pub use traits::{Tool, ToolResult};

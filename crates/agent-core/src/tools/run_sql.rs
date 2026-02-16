@@ -62,7 +62,10 @@ impl Tool for RunSqlTool {
         }
     }
 
-    fn execute(&self, params: HashMap<String, serde_json::Value>) -> Pin<Box<dyn Future<Output = Result<ToolResult, String>> + Send>> {
+    fn execute(
+        &self,
+        params: HashMap<String, serde_json::Value>,
+    ) -> Pin<Box<dyn Future<Output = Result<ToolResult, String>> + Send>> {
         let warehouse = self.warehouse.clone();
         let sql = params
             .get("sql")

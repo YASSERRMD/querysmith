@@ -42,16 +42,17 @@ impl AgentOrchestrator {
         self.messages.clear();
     }
 
-    pub async fn process_response(&mut self, response: ChatCompletionResponse) -> Result<AgentAction, String> {
-        let choice = response.choices.first()
-            .ok_or("No choices in response")?;
+    pub async fn process_response(
+        &mut self,
+        response: ChatCompletionResponse,
+    ) -> Result<AgentAction, String> {
+        let choice = response.choices.first().ok_or("No choices in response")?;
 
         let message = &choice.message;
-        
+
         if let Some(tool_calls) = &message.tool_calls {
-            let tool_call = tool_calls.first()
-                .ok_or("No tool calls in message")?;
-            
+            let tool_call = tool_calls.first().ok_or("No tool calls in message")?;
+
             self.messages.push(crate::llm::ChatMessage {
                 role: MessageRole::Assistant,
                 content: message.content.clone(),
@@ -121,14 +122,14 @@ impl SelfCorrectingAgent {
         Fut: std::future::Future<Output = Result<ChatCompletionResponse, String>>,
     {
         let max_retries = self.orchestrator.max_retries();
-        
+
         for attempt in 0..max_retries {
             let messages = self.orchestrator.get_messages_for_llm();
-            
+
             let response = llm_call(messages).await?;
-            
+
             let action = self.orchestrator.process_response(response).await?;
-            
+
             match action {
                 AgentAction::Response(content) => {
                     return Ok(content);
@@ -137,15 +138,20 @@ impl SelfCorrectingAgent {
                     let tool_name = &tool_call.name;
                     let arguments = tool_call.arguments;
                     let tool_call_id = &tool_call.id;
-                    
-                    let result = self.orchestrator.runtime.execute_tool(tool_name, arguments).await;
-                    
+
+                    let result = self
+                        .orchestrator
+                        .runtime
+                        .execute_tool(tool_name, arguments)
+                        .await;
+
                     match result {
                         Ok(result_str) => {
                             self.orchestrator.add_tool_result(tool_call_id, result_str);
                         }
                         Err(error) => {
-                            self.orchestrator.add_tool_result(tool_call_id, format!("Error: {}", error));
+                            self.orchestrator
+                                .add_tool_result(tool_call_id, format!("Error: {}", error));
                         }
                     }
                 }
@@ -156,7 +162,7 @@ impl SelfCorrectingAgent {
                 }
             }
         }
-        
+
         Err("Max retries exceeded".to_string())
     }
 }
