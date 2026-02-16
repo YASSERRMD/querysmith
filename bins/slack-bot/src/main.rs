@@ -53,47 +53,43 @@ struct SlackResponse {
     text: String,
 }
 
-async fn handle_url_verification(Json(payload): Json<SlackRequest>) -> impl IntoResponse {
-    if let Some(challenge) = payload.challenge {
-        (StatusCode::OK, challenge)
-    } else {
-        (StatusCode::OK, "".to_string())
-    }
-}
-
-async fn handle_event_callback(
+async fn handle_slack_events(
     state: axum::extract::State<SlackBotState>,
     Json(payload): Json<SlackRequest>,
 ) -> impl IntoResponse {
-    if payload.request_type != "event_callback" {
-        return (StatusCode::OK, "".to_string());
+    if payload.request_type == "url_verification" {
+        if let Some(challenge) = payload.challenge {
+            return (StatusCode::OK, challenge);
+        }
     }
 
-    if let Some(event) = payload.event {
-        if event.event_type == "message" {
-            if let (Some(text), Some(user), Some(channel), Some(thread_ts)) = (
-                event.text,
-                event.user,
-                event.channel,
-                event.thread_ts.or(event.ts),
-            ) {
-                info!("Received message from user {} in channel {}", user, channel);
+    if payload.request_type == "event_callback" {
+        if let Some(event) = payload.event {
+            if event.event_type == "message" {
+                if let (Some(text), Some(user), Some(channel), Some(thread_ts)) = (
+                    event.text,
+                    event.user,
+                    event.channel,
+                    event.thread_ts.or(event.ts),
+                ) {
+                    info!("Received message from user {} in channel {}", user, channel);
 
-                let conversation_key = format!("{}:{}", channel, thread_ts);
+                    let conversation_key = format!("{}:{}", channel, thread_ts);
 
-                let _ = state.conversations.write().await.insert(
-                    conversation_key.clone(),
-                    ConversationState {
-                        user_id: user.clone(),
-                        thread_ts: Some(thread_ts),
-                    },
-                );
+                    let _ = state.conversations.write().await.insert(
+                        conversation_key.clone(),
+                        ConversationState {
+                            user_id: user.clone(),
+                            thread_ts: Some(thread_ts),
+                        },
+                    );
 
-                let user_memory_scope = MemoryScope::user(&user);
-                let _ = state
-                    .memory
-                    .retrieve(&text, Some(user_memory_scope), 5)
-                    .await;
+                    let user_memory_scope = MemoryScope::user(&user);
+                    let _ = state
+                        .memory
+                        .retrieve(&text, Some(user_memory_scope), 5)
+                        .await;
+                }
             }
         }
     }
@@ -174,8 +170,7 @@ async fn main() {
     };
 
     let app = Router::new()
-        .route("/slack/events", post(handle_url_verification))
-        .route("/slack/events", post(handle_event_callback))
+        .route("/slack/events", post(handle_slack_events))
         .route("/slack/commands", post(handle_slash_command))
         .with_state(state);
 
