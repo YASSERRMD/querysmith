@@ -9,6 +9,7 @@ members = [
     "bins/context-enricher",
     "bins/evals",
     "bins/query-smith-web",
+    "bins/slack-bot",
 ]
 
 [workspace.package]
@@ -33,3 +34,4 @@ tokio-tungstenite = "0.21"
 tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5", features = ["cors"] }
 futures-util = "0.3"
+reqwest = { version = "0.12", features = ["json"] }
