@@ -36,28 +36,28 @@ where
     pub async fn get(&self, key: &K) -> Option<V> {
         let data = self.data.read().await;
         let entry = data.get(key)?;
-        
+
         if entry.created.elapsed() > self.ttl {
             return None;
         }
-        
+
         Some(entry.value.clone())
     }
 
     pub async fn set(&self, key: K, value: V) {
         let mut data = self.data.write().await;
-        
+
         if data.len() >= self.max_entries {
             let oldest = data
                 .iter()
                 .min_by_key(|(_, entry)| entry.created)
                 .map(|(k, _)| k.clone());
-            
+
             if let Some(oldest_key) = oldest {
                 data.remove(&oldest_key);
             }
         }
-        
+
         data.insert(
             key,
             CacheEntry {
@@ -92,9 +92,9 @@ mod tests {
     #[tokio::test]
     async fn test_cache() {
         let cache = Cache::<String, String>::new(Duration::from_secs(10));
-        
+
         cache.set("key1".to_string(), "value1".to_string()).await;
-        
+
         let value = cache.get(&"key1".to_string()).await;
         assert!(value.is_some());
         assert_eq!(value.unwrap(), "value1");
@@ -103,7 +103,7 @@ mod tests {
     #[tokio::test]
     async fn test_cache_miss() {
         let cache = Cache::<String, String>::new(Duration::from_secs(10));
-        
+
         let value = cache.get(&"nonexistent".to_string()).await;
         assert!(value.is_none());
     }

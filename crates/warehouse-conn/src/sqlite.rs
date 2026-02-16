@@ -137,10 +137,7 @@ impl Warehouse for SqliteWarehouse {
             .await
             .map_err(|e| Error::Query(e.to_string()))?;
 
-        Ok(rows
-            .iter()
-            .map(|row| row.get::<String, _>(0))
-            .collect())
+        Ok(rows.iter().map(|row| row.get::<String, _>(0)).collect())
     }
 
     async fn preview_table(&self, table_name: &str, limit: usize) -> Result<QueryResult, Error> {

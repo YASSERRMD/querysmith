@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use serde_json::Value;
+use std::collections::HashMap;
 
 use crate::types::VectorIndex;
 
@@ -45,25 +45,66 @@ impl RAGService {
         }
     }
 
-    pub fn index_table(&mut self, id: String, vector: Vec<f32>, content: String, metadata: serde_json::Value) {
-        self.table_index.add_with_content(id, vector, content, metadata);
+    pub fn index_table(
+        &mut self,
+        id: String,
+        vector: Vec<f32>,
+        content: String,
+        metadata: serde_json::Value,
+    ) {
+        self.table_index
+            .add_with_content(id, vector, content, metadata);
     }
 
-    pub fn index_documentation(&mut self, id: String, vector: Vec<f32>, content: String, metadata: serde_json::Value) {
-        self.doc_index.add_with_content(id, vector, content, metadata);
+    pub fn index_documentation(
+        &mut self,
+        id: String,
+        vector: Vec<f32>,
+        content: String,
+        metadata: serde_json::Value,
+    ) {
+        self.doc_index
+            .add_with_content(id, vector, content, metadata);
     }
 
-    pub fn index_memory(&mut self, id: String, vector: Vec<f32>, content: String, metadata: serde_json::Value) {
-        self.memory_index.add_with_content(id, vector, content, metadata);
+    pub fn index_memory(
+        &mut self,
+        id: String,
+        vector: Vec<f32>,
+        content: String,
+        metadata: serde_json::Value,
+    ) {
+        self.memory_index
+            .add_with_content(id, vector, content, metadata);
     }
 
-    pub fn index_schema(&mut self, id: String, vector: Vec<f32>, content: String, metadata: serde_json::Value) {
-        self.schema_index.add_with_content(id, vector, content, metadata);
+    pub fn index_schema(
+        &mut self,
+        id: String,
+        vector: Vec<f32>,
+        content: String,
+        metadata: serde_json::Value,
+    ) {
+        self.schema_index
+            .add_with_content(id, vector, content, metadata);
     }
 
-    pub async fn retrieve(&self, query: &str, query_vector: &[f32], k: usize, sources: Option<Vec<SourceType>>) -> RetrievalResult {
-        let sources = sources.unwrap_or_else(|| vec![SourceType::Table, SourceType::Documentation, SourceType::Memory, SourceType::Schema]);
-        
+    pub async fn retrieve(
+        &self,
+        query: &str,
+        query_vector: &[f32],
+        k: usize,
+        sources: Option<Vec<SourceType>>,
+    ) -> RetrievalResult {
+        let sources = sources.unwrap_or_else(|| {
+            vec![
+                SourceType::Table,
+                SourceType::Documentation,
+                SourceType::Memory,
+                SourceType::Schema,
+            ]
+        });
+
         let mut all_chunks = Vec::new();
 
         if sources.contains(&SourceType::Table) {
@@ -134,7 +175,11 @@ impl RAGService {
             }
         }
 
-        all_chunks.sort_by(|a, b| b.score.partial_cmp(&a.score).unwrap_or(std::cmp::Ordering::Equal));
+        all_chunks.sort_by(|a, b| {
+            b.score
+                .partial_cmp(&a.score)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
         all_chunks.truncate(k);
 
         let total_results = all_chunks.len();
@@ -148,9 +193,13 @@ impl RAGService {
 
     pub fn format_context(&self, result: &RetrievalResult) -> String {
         let mut context = String::from("## Relevant Context\n\n");
-        
+
         for chunk in &result.chunks {
-            context.push_str(&format!("### {} (score: {:.2})\n", self.source_to_string(&chunk.source), chunk.score));
+            context.push_str(&format!(
+                "### {} (score: {:.2})\n",
+                self.source_to_string(&chunk.source),
+                chunk.score
+            ));
             context.push_str(&chunk.content);
             context.push_str("\n\n");
         }
@@ -181,7 +230,7 @@ mod tests {
     #[test]
     fn test_index_and_retrieve() {
         let mut rag = RAGService::new(3);
-        
+
         rag.index_table(
             "users".to_string(),
             vec![1.0, 0.0, 0.0],
@@ -189,9 +238,9 @@ mod tests {
             serde_json::json!({"table": "users"}),
         );
 
-        let result = tokio::runtime::Runtime::new().unwrap().block_on(
-            rag.retrieve("user data", &vec![1.0, 0.0, 0.0], 5, None)
-        );
+        let result = tokio::runtime::Runtime::new()
+            .unwrap()
+            .block_on(rag.retrieve("user data", &vec![1.0, 0.0, 0.0], 5, None));
 
         assert!(!result.chunks.is_empty());
     }

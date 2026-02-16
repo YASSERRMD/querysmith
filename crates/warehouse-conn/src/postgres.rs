@@ -72,12 +72,12 @@ impl Warehouse for PostgresWarehouse {
             .acquire_timeout(self.options.acquire_timeout)
             .idle_timeout(self.options.idle_timeout)
             .max_lifetime(self.options.max_lifetime);
-        
+
         let pool = pool_options
             .connect(&self.connection_string)
             .await
             .map_err(|e| Error::Connection(e.to_string()))?;
-        
+
         let mut guard = self.pool.write().await;
         *guard = Some(pool);
         Ok(())
@@ -93,13 +93,13 @@ impl Warehouse for PostgresWarehouse {
 
     async fn execute(&self, sql: &str) -> Result<QueryResult, Error> {
         let pool = self.get_pool().await?;
-        
+
         if sql.trim().to_uppercase().starts_with("SELECT") {
             let rows = sqlx::query(sql)
                 .fetch_all(&pool)
                 .await
                 .map_err(|e| Error::Query(e.to_string()))?;
-            
+
             let columns: Vec<String> = if !rows.is_empty() {
                 rows[0]
                     .columns()
@@ -109,7 +109,7 @@ impl Warehouse for PostgresWarehouse {
             } else {
                 vec![]
             };
-            
+
             let mut result_rows: Vec<Vec<serde_json::Value>> = Vec::new();
             for row in &rows {
                 let mut row_values: Vec<serde_json::Value> = Vec::new();
@@ -119,7 +119,7 @@ impl Warehouse for PostgresWarehouse {
                 }
                 result_rows.push(row_values);
             }
-            
+
             let row_count = result_rows.len();
             Ok(QueryResult {
                 columns,
@@ -131,7 +131,7 @@ impl Warehouse for PostgresWarehouse {
                 .execute(&pool)
                 .await
                 .map_err(|e| Error::Query(e.to_string()))?;
-            
+
             Ok(QueryResult {
                 columns: vec!["affected_rows".to_string()],
                 rows: vec![vec![serde_json::Value::Number(1.into())]],
@@ -142,7 +142,7 @@ impl Warehouse for PostgresWarehouse {
 
     async fn get_schema(&self, table_name: &str) -> Result<TableSchema, Error> {
         let pool = self.get_pool().await?;
-        
+
         let columns_sql = format!(
             r#"
             SELECT 
@@ -207,7 +207,7 @@ impl Warehouse for PostgresWarehouse {
 
     async fn list_tables(&self) -> Result<Vec<String>, Error> {
         let pool = self.get_pool().await?;
-        
+
         let sql = r#"
             SELECT table_name 
             FROM information_schema.tables 

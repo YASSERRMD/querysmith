@@ -1,6 +1,6 @@
+use async_trait::async_trait;
 use std::collections::HashMap;
 use std::sync::Arc;
-use async_trait::async_trait;
 use tokio::sync::RwLock;
 use tracing::{error, info};
 
@@ -55,14 +55,14 @@ impl WorkflowEngine {
 
     pub async fn execute_workflow(&self, workflow: &Workflow) -> Result<String, Error> {
         info!("Executing workflow: {}", workflow.definition.name);
-        
+
         let mut results: Vec<String> = Vec::new();
-        
+
         for step in &workflow.definition.steps {
             info!("Executing step: {}", step.name);
-            
+
             let result = self.execute_action(&step.action).await;
-            
+
             match result {
                 Ok(output) => {
                     results.push(format!("{}: {}", step.name, output));
@@ -72,12 +72,15 @@ impl WorkflowEngine {
                     if let Some(on_error) = &step.on_error {
                         results.push(format!("{}: Error handled by '{}'", step.name, on_error));
                     } else {
-                        return Err(Error::Execution(format!("Step {} failed: {}", step.name, e)));
+                        return Err(Error::Execution(format!(
+                            "Step {} failed: {}",
+                            step.name, e
+                        )));
                     }
                 }
             }
         }
-        
+
         Ok(results.join("\n"))
     }
 
