@@ -5,6 +5,7 @@ members = [
     "crates/metadata-svc",
     "crates/rag-engine",
     "crates/warehouse-conn",
+    "bins/context-enricher",
 ]
 
 [workspace.package]
