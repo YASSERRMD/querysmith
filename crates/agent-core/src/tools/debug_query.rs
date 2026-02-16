@@ -106,7 +106,7 @@ impl Tool for DebugQueryTool {
                 .and_then(|v| v.as_str())
                 .ok_or("Missing required parameter: error")?;
 
-            let analysis = Self.analyze_error(&sql, &error);
+            let analysis = Self.analyze_error(sql, error);
 
             Ok(ToolResult::success(serde_json::json!({
                 "analysis": analysis,
