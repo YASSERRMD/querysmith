@@ -83,15 +83,17 @@ impl WorkflowEngine {
 
     async fn execute_action(&self, action: &Action) -> Result<String, String> {
         match action {
-            Action::Query { sql, database: _ } => {
-                Ok(format!("Query handler not configured. Would execute: {}", sql))
-            }
+            Action::Query { sql, database: _ } => Ok(format!(
+                "Query handler not configured. Would execute: {}",
+                sql
+            )),
             Action::Transform { input, script } => {
                 Ok(format!("Transform: {} with {}", input, script))
             }
-            Action::Notify { channel, message } => {
-                Ok(format!("Notify handler not configured. Would send to {}: {}", channel, message))
-            }
+            Action::Notify { channel, message } => Ok(format!(
+                "Notify handler not configured. Would send to {}: {}",
+                channel, message
+            )),
             Action::Sleep { duration } => {
                 tokio::time::sleep(tokio::time::Duration::from_secs(*duration)).await;
                 Ok(format!("Slept for {} seconds", duration))
@@ -132,7 +134,10 @@ impl WorkflowScheduler {
 
     pub async fn trigger(&self, workflow_name: &str) -> Result<String, String> {
         info!("Manually triggering workflow: {}", workflow_name);
-        self.engine.execute(workflow_name).await.map_err(|e| e.to_string())
+        self.engine
+            .execute(workflow_name)
+            .await
+            .map_err(|e| e.to_string())
     }
 }
 
@@ -143,7 +148,7 @@ mod tests {
     #[tokio::test]
     async fn test_workflow_engine() {
         let engine = WorkflowEngine::new();
-        
+
         let yaml = r#"
 name: test-workflow
 version: "1.0"
@@ -155,12 +160,12 @@ steps:
       type: sleep
       duration: 1
 "#;
-        
+
         let definition = crate::models::WorkflowDefinition::from_yaml(yaml).unwrap();
         let workflow = Workflow::new(definition);
-        
+
         engine.register(workflow).await.unwrap();
-        
+
         let result = engine.execute("test-workflow").await;
         assert!(result.is_ok());
     }
