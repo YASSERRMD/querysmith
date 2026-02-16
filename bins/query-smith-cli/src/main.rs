@@ -10,11 +10,14 @@ struct Cli {
     #[command(subcommand)]
     command: Commands,
 
-    #[arg(short, long, default_value = "postgres://localhost/querysmith")]
+    #[arg(short, long, default_value = "postgres://localhost/querysmith", env = "DATABASE_URL")]
     database: String,
 
-    #[arg(short, long, default_value = "minimax-m2.5")]
+    #[arg(short, long, default_value = "minimax-m2.5", env = "LLM_MODEL")]
     model: String,
+
+    #[arg(short, long, env = "OPENAI_API_KEY")]
+    api_key: Option<String>,
 }
 
 #[derive(Subcommand)]

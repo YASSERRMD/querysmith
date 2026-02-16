@@ -155,8 +155,11 @@ async fn main() {
 
     info!("Starting QuerySmith Slack Bot");
 
+    let model = std::env::var("LLM_MODEL").unwrap_or_else(|_| "minimax-m2.5".to_string());
+    let _api_key = std::env::var("OPENAI_API_KEY").ok();
+
     let agent = Arc::new(agent_core::AgentRuntime::new(
-        "minimax-m2.5".to_string(),
+        model,
         agent_core::ToolRegistry::new(),
     ));
 
