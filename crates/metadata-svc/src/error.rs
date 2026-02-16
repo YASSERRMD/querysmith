@@ -1,6 +1,7 @@
+use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize, Deserialize)]
 pub enum Error {
     #[error("Metadata error: {0}")]
     Metadata(String),
