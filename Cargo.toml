@@ -6,6 +6,7 @@ members = [
     "crates/rag-engine",
     "crates/warehouse-conn",
     "crates/memory-svc",
+    "crates/workflow-engine",
     "bins/context-enricher",
     "bins/evals",
     "bins/query-smith-web",
@@ -37,3 +38,5 @@ tower-http = { version = "0.5", features = ["cors"] }
 futures-util = "0.3"
 reqwest = { version = "0.12", features = ["json"] }
 clap = { version = "4", features = ["derive", "env"] }
+serde_yaml = "0.9"
+tokio-cron = "0.12"
