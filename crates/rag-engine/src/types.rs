@@ -6,6 +6,7 @@ pub struct VectorIndex {
     pub dimension: usize,
     pub vectors: HashMap<String, Vec<f32>>,
     pub metadata: HashMap<String, serde_json::Value>,
+    pub contents: HashMap<String, String>,
 }
 
 impl VectorIndex {
@@ -14,6 +15,7 @@ impl VectorIndex {
             dimension,
             vectors: HashMap::new(),
             metadata: HashMap::new(),
+            contents: HashMap::new(),
         }
     }
 
@@ -22,7 +24,22 @@ impl VectorIndex {
             return;
         }
         self.vectors.insert(id.clone(), vector);
-        self.metadata.insert(id, metadata);
+        self.metadata.insert(id.clone(), metadata);
+    }
+
+    pub fn add_with_content(
+        &mut self,
+        id: String,
+        vector: Vec<f32>,
+        content: String,
+        metadata: serde_json::Value,
+    ) {
+        if vector.len() != self.dimension {
+            return;
+        }
+        self.vectors.insert(id.clone(), vector);
+        self.metadata.insert(id.clone(), metadata);
+        self.contents.insert(id, content);
     }
 
     pub fn search(&self, query: &[f32], k: usize) -> Vec<(String, f32)> {
@@ -37,6 +54,25 @@ impl VectorIndex {
             .collect();
 
         scores.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));
+        scores.truncate(k);
+        scores
+    }
+
+    pub fn search_with_content(&self, query: &[f32], k: usize) -> Vec<(String, String, f32)> {
+        if query.len() != self.dimension || self.vectors.is_empty() {
+            return vec![];
+        }
+
+        let mut scores: Vec<(String, String, f32)> = self
+            .vectors
+            .iter()
+            .map(|(id, vec)| {
+                let content = self.contents.get(id).cloned().unwrap_or_default();
+                (id.clone(), content, self.cosine_similarity(query, vec))
+            })
+            .collect();
+
+        scores.sort_by(|a, b| b.2.partial_cmp(&a.2).unwrap_or(std::cmp::Ordering::Equal));
         scores.truncate(k);
         scores
     }
