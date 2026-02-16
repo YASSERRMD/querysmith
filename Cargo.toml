@@ -10,6 +10,7 @@ members = [
     "bins/evals",
     "bins/query-smith-web",
     "bins/slack-bot",
+    "bins/query-smith-cli",
 ]
 
 [workspace.package]
@@ -35,3 +36,4 @@ tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5", features = ["cors"] }
 futures-util = "0.3"
 reqwest = { version = "0.12", features = ["json"] }
+clap = { version = "4", features = ["derive", "env"] }
