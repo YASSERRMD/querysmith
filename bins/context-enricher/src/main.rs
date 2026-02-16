@@ -29,6 +29,7 @@ pub struct ColumnInfo {
 
 pub struct ContextEnricher {
     metadata: MetadataService,
+    #[allow(dead_code)]
     vector_index: Option<VectorIndex>,
 }
 
@@ -66,7 +67,7 @@ impl ContextEnricher {
                 .collect();
 
             let sample_result = warehouse.preview_table(&table_name, 5).await?;
-            let sample_values: Vec<HashMap<String, serde_json::Value>> = sample_result
+            let _sample_values: Vec<HashMap<String, serde_json::Value>> = sample_result
                 .rows
                 .iter()
                 .map(|row| {
@@ -157,7 +158,7 @@ impl ContextEnricher {
         if !table.columns.is_empty() {
             desc.push_str("\nColumns:");
             for col in &table.columns {
-                let nullable = if col.nullable { "NULL" } else { "NOT NULL" };
+                let _nullable = if col.nullable { "NULL" } else { "NOT NULL" };
                 let comment = col.comment.as_ref().map(|c| format!(" - {}", c)).unwrap_or_default();
                 desc.push_str(&format!("\n  - {} ({}) {}", col.name, col.data_type, comment));
             }
@@ -219,7 +220,7 @@ async fn main() -> Result<()> {
     
     info!("Context Enricher starting...");
 
-    let enricher = ContextEnricher::new();
+    let _enricher = ContextEnricher::new();
     
     println!("Context enricher initialized");
     println!("Usage:");

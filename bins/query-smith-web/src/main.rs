@@ -16,6 +16,7 @@ use tower::ServiceBuilder;
 use tower_http::cors::{Any, CorsLayer};
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct AppState {
     agent: Arc<agent_core::AgentRuntime>,
     memory: Arc<memory_svc::MemoryService>,
@@ -60,7 +61,7 @@ async fn ws_handler(
     ws: WebSocketUpgrade,
     State(_state): State<AppState>,
 ) -> Response {
-    ws.on_upgrade(|socket| handle_socket(socket))
+    ws.on_upgrade(handle_socket)
 }
 
 async fn handle_socket(socket: WebSocket) {

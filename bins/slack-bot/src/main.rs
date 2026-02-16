@@ -13,6 +13,7 @@ use tokio::sync::RwLock;
 use tracing::info;
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct SlackBotState {
     agent: Arc<agent_core::AgentRuntime>,
     memory: Arc<memory_svc::MemoryService>,
@@ -20,6 +21,7 @@ struct SlackBotState {
 }
 
 #[derive(Clone)]
+#[allow(dead_code)]
 struct ConversationState {
     user_id: String,
     thread_ts: Option<String>,
@@ -37,6 +39,7 @@ struct SlackEvent {
 }
 
 #[derive(Debug, Deserialize)]
+#[allow(dead_code)]
 struct SlackRequest {
     #[serde(rename = "type")]
     request_type: String,
@@ -105,7 +108,7 @@ async fn handle_slash_command(
     let command = payload.command.unwrap_or_default();
     let text = payload.text.unwrap_or_default();
     let user_id = payload.user_id.unwrap_or_default();
-    let channel_id = payload.channel_id.unwrap_or_default();
+    let _channel_id = payload.channel_id.unwrap_or_default();
 
     info!("Slash command: {} with text: {}", command, text);
 
@@ -114,7 +117,7 @@ async fn handle_slash_command(
             let user_memory_scope = MemoryScope::user(&user_id);
             let context = state.memory.inject_into_prompt(&text, Some(user_memory_scope)).await.unwrap_or_default();
             
-            let full_prompt = if context.is_empty() {
+            let _full_prompt = if context.is_empty() {
                 text.clone()
             } else {
                 format!("{}\n\nRelevant context:\n{}", text, context)

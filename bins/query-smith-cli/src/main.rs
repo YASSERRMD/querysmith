@@ -91,7 +91,7 @@ async fn main() -> anyhow::Result<()> {
             let all_memory = memory.get_all().await?;
             println!("Memory entries (showing up to {}):", limit);
             for (i, mem) in all_memory.iter().take(limit).enumerate() {
-                println!("{}. [{}] {}", i + 1, format!("{:?}", mem.memory_type), &mem.content[..mem.content.len().min(80)]);
+                println!("{}. [{:?}] {}", i + 1, mem.memory_type, &mem.content[..mem.content.len().min(80)]);
             }
         }
     }
@@ -140,7 +140,7 @@ async fn run_repl(
                 let all = memory.get_all().await?;
                 println!("Memory entries: {}", all.len());
                 for mem in all.iter().take(5) {
-                    println!("  - [{}] {}", format!("{:?}", mem.memory_type), &mem.content[..mem.content.len().min(60)]);
+                    println!("  - [{:?}] {}", mem.memory_type, &mem.content[..mem.content.len().min(60)]);
                 }
             }
             "clear" => {
