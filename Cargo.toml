@@ -8,6 +8,7 @@ members = [
     "crates/memory-svc",
     "bins/context-enricher",
     "bins/evals",
+    "bins/query-smith-web",
 ]
 
 [workspace.package]
@@ -27,3 +28,8 @@ async-trait = "0.1"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 sqlx = { version = "0.8", features = ["runtime-tokio", "postgres", "sqlite"] }
+axum = { version = "0.7", features = ["ws"] }
+tokio-tungstenite = "0.21"
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors"] }
+futures-util = "0.3"
