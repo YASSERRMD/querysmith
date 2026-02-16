@@ -7,6 +7,7 @@ members = [
     "crates/warehouse-conn",
     "crates/memory-svc",
     "bins/context-enricher",
+    "bins/evals",
 ]
 
 [workspace.package]
