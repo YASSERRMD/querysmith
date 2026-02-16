@@ -5,6 +5,7 @@ members = [
     "crates/metadata-svc",
     "crates/rag-engine",
     "crates/warehouse-conn",
+    "crates/memory-svc",
     "bins/context-enricher",
 ]
 
